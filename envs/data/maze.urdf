@@ -1,0 +1,243 @@
+<?xml version="0.0" ?>
+<robot name="cube.urdf">
+    <link name="wall1">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".01 .15 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".01 .15 .01"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="wall1_wall2_joint" type="fixed">
+        <parent link="wall1"/>
+        <child link="wall2"/>
+        <origin rpy="0 0 0" xyz=".045 -.07 0"/>
+    </joint>
+    <link name="wall2">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".08 .01 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".08 .01 .01"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="wall2_wall3_joint" type="fixed">
+        <parent link="wall2"/>
+        <child link="wall3"/>
+        <origin rpy="0 0 0" xyz=".035 .015 0"/>
+    </joint>
+    <link name="wall3">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".01 .02 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".01 .02 .01"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="wall3_wall4_joint" type="fixed">
+        <parent link="wall3"/>
+        <child link="wall4"/>
+        <origin rpy="0 0 0" xyz="-.015 .015 0"/>
+    </joint>
+    <link name="wall4">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".04 .01 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".04 .01 .01"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="wall4_wall5_joint" type="fixed">
+        <parent link="wall4"/>
+        <child link="wall5"/>
+        <origin rpy="0 0 0" xyz="-.025 .04 0"/>
+    </joint>
+    <link name="wall5">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".01 .09 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".01 .09 .01"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="wall5_wall6_joint" type="fixed">
+        <parent link="wall5"/>
+        <child link="wall6"/>
+        <origin rpy="0 0 0" xyz=".025 .040 0"/>
+    </joint>
+    <link name="wall6">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".04 .01 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".04 .01 .01"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="wall6_wall7_joint" type="fixed">
+        <parent link="wall6"/>
+        <child link="wall7"/>
+        <origin rpy="0 0 0" xyz=".015 .015 0"/>
+    </joint>
+    <link name="wall7">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".01 .02 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".01 .02 .01"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="wall7_wall8_joint" type="fixed">
+        <parent link="wall7"/>
+        <child link="wall8"/>
+        <origin rpy="0 0 0" xyz="-.035 .015 0"/>
+    </joint>
+    <link name="wall8">
+        <contact>
+            <lateral_friction value="1.0"/>
+            <inertia_scaling value="3.0"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value=".0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size=".08 .01 .01"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size=".08 .01 .01"/>
+            </geometry>
+        </collision>
+    </link>
+<!--    <joint name="wall8_wall1_joint" type="fixed">-->
+<!--        <parent link="wall8"/>-->
+<!--        <child link="wall1"/>-->
+<!--        <origin rpy="0 0 0" xyz="-.045 -.070 0"/>-->
+<!--    </joint>-->
+</robot>
