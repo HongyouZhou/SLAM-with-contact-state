@@ -10,21 +10,30 @@ maze_grid = [[0, 0, 0, 0],
              [0, 1, 1, 0],
              [0, 1, 1, 0]]
 
+maze_pos = [0.5, -0.1, 0.91]
+cs1_offset = [0.15, -0.06, 0.02]
+x_step_size = -0.04
+y_step_size = 0.04
+maze_origin_offset = np.array(maze_pos) + np.array(cs1_offset)
+
+
+def getCartPosFromIndex(x, y):
+    return maze_origin_offset + np.array([x_step_size * x, y_step_size * y, 0.02])
+
 
 def main():
-    maze_pos = [0.5, -0.1, 0.91]
     maze = PyBulletObject(urdf_name='maze',
                           object_name='maze',
                           position=maze_pos,
                           orientation=[0, 0, 0],
                           data_dir=None)
-    cs1_offset = [0.15, -0.06, 0.02]
+
     stick_pos = list(map(sum, zip(maze_pos, cs1_offset)))
     stick = PyBulletObject(urdf_name='stick',
-                          object_name='stick',
-                          position=stick_pos,
-                          orientation=[0, 0, 0],
-                          data_dir=None)
+                           object_name='stick',
+                           position=stick_pos,
+                           orientation=[0, 0, 0],
+                           data_dir=None)
 
     object_list = [maze, stick]
     scene = Scene(object_list=object_list)
@@ -38,7 +47,7 @@ def main():
 
     PyBulletRobot.startLogging()
     # duration = 4
-    duration = 2
+    duration = 1
 
     PyBulletRobot.ctrl_duration = duration
     PyBulletRobot.set_gripper_width = 0.04
@@ -57,13 +66,31 @@ def main():
     desired_cart_pos_2 = desired_cart_pos_1 + np.array([0., 0, 0.02])
     PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_2, desiredQuat=desired_quat_1, duration=duration)
 
-    desired_cart_pos_3 = desired_cart_pos_2 + np.array([-0.12, 0, 0])
+    desired_cart_pos_3 = getCartPosFromIndex(1, 0)
     PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_3, desiredQuat=desired_quat_1, duration=duration)
 
-    desired_cart_pos_4 = desired_cart_pos_3 + np.array([0, 0.12, 0])
+    desired_cart_pos_4 = getCartPosFromIndex(2, 0)
     PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_4, desiredQuat=desired_quat_1, duration=duration)
 
-    desired_cart_pos_5 = desired_cart_pos_4 + np.array([0.12, 0, 0])
+    desired_cart_pos_5 = getCartPosFromIndex(3, 0)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_5, desiredQuat=desired_quat_1, duration=duration)
+
+    desired_cart_pos_5 = getCartPosFromIndex(3, 1)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_5, desiredQuat=desired_quat_1, duration=duration)
+
+    desired_cart_pos_5 = getCartPosFromIndex(2, 1)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_5, desiredQuat=desired_quat_1, duration=duration)
+
+    desired_cart_pos_5 = getCartPosFromIndex(2, 2)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_5, desiredQuat=desired_quat_1, duration=duration)
+
+    desired_cart_pos_5 = getCartPosFromIndex(2, 3)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_5, desiredQuat=desired_quat_1, duration=duration)
+
+    desired_cart_pos_5 = getCartPosFromIndex(1, 3)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_5, desiredQuat=desired_quat_1, duration=duration)
+
+    desired_cart_pos_5 = getCartPosFromIndex(0, 3)
     PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_5, desiredQuat=desired_quat_1, duration=duration)
 
     # get camera image
