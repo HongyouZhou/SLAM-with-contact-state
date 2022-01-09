@@ -169,6 +169,30 @@ class PyBulletRobot(RobotBase):
             forces[joint - 1] = np.linalg.norm(np.array(infs[0:3]))
         return forces
 
+    def get_finger_reaction_forces(self, robot_id=None, client_id=None):
+        """
+        Calculate the robot End-Effector reaction force using the function 'getJointState'
+
+        :param robot_id: robot ID returned by calling `loadURDF`
+        :param client_id: ID of the physics client
+        :return: reaction forces (6, 1) with  [Fx, Fy, Fz, Mx, My, Mz]
+        Note that the init forces of EE without grasping is not 0, we might have to calibrate
+        TODO: Check if we get appropriate contact force by moving the robot towards the collision
+        """
+        if robot_id is None:
+            robot_id = self.robot_id
+        if client_id is None:
+            client_id = self.scene.physics_client_id
+
+        # only pass through the finger index
+        left_finger_force = self.pybullet.getJointState(bodyUniqueId=robot_id, jointIndex=10, physicsClientId=client_id)[2]
+        right_finger_force = self.pybullet.getJointState(bodyUniqueId=robot_id, jointIndex=11, physicsClientId=client_id)[2]
+
+        # compensate the force resulted from grasping
+        forces = np.array(left_finger_force) + np.array(right_finger_force)
+
+        return forces
+
     def get_x(self, robot_id=None, client_id=None):
         """
         This method returns the cartesian world position, the cartesian velocity and the quaternion
