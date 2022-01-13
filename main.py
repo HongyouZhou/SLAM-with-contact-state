@@ -1,6 +1,7 @@
 import numpy as np
 import pybullet as p
 import networkx as nx
+import matplotlib.pyplot as plt
 from classic_framework.pybullet.PyBulletRobot import PyBulletRobot as Robot
 from classic_framework.pybullet.PyBulletScene import PyBulletScene as Scene
 from classic_framework.interface.Logger import RobotPlotFlags
@@ -142,6 +143,7 @@ def slam():
             measurement = getMeasurment()
             curNode = dummyHash(robot_grid_pos, measurement)
             if curNode in attrs:
+                G.add_edge(lastNode, curNode)
                 break
             else:
                 attrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement}
@@ -186,6 +188,9 @@ def main():
 
     initRobot()
     slam()
+    pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
+    nx.draw(G, pos)
+    plt.show()
 
     PyBulletRobot.stopLogging()
 
