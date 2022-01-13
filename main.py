@@ -28,7 +28,7 @@ G = nx.DiGraph()
 attrs = {}
 lastConstraint = 0
 
-duration = 0.1
+duration = 0.5
 maze = PyBulletObject(urdf_name='maze',
                       object_name='maze',
                       position=MAZE_POS,
@@ -170,17 +170,17 @@ def initRobot():
     # desired_quat_1 = [0.01806359,  0.91860348, -0.38889658, -0.06782891]
     desired_quat_1 = [0, 1, 0, 0]  # we use w,x,y,z. where pybullet uses x,y,z,w (we just have to swap the positions)
 
-    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_1, desiredQuat=desired_quat_1, duration=duration)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_1, desiredQuat=desired_quat_1, duration=4)
     # there is no gripper controller. The desired gripper width will be executed right after the next controller
     # starts
     PyBulletRobot.set_gripper_width = 0.0
 
     # close the gripper and lift up the object
     desired_cart_pos_2 = desired_cart_pos_1 + np.array([0., 0, 0.02])
-    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_2, desiredQuat=desired_quat_1, duration=duration)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_2, desiredQuat=desired_quat_1, duration=4)
 
     desired_cart_pos_3 = getCartPosFromIndex(robot_grid_pos[0], robot_grid_pos[1])
-    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_3, desiredQuat=desired_quat_1, duration=duration)
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_3, desiredQuat=desired_quat_1, duration=4)
 
 
 def main():

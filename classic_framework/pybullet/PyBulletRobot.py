@@ -412,7 +412,7 @@ class PyBulletRobot(RobotBase):
         init_j_pos, _, __ = self.get_qdq_J()
 
         if use_fictive:
-            super(PyBulletRobot, self).gotoCartPositionAndQuat(desiredPos, desiredQuat)
+            super(PyBulletRobot, self).gotoCartPositionAndQuat(desiredPos, desiredQuat, duration)
         # desired_cart_traj = self.gotoCartPosQuatController.fictive_robot.gotoCartPosQuatController.trajectory
         # desired_cart_vels = self.gotoCartPosQuatController.fictive_robot.gotoCartPosQuatController.trajectoryVel
         else:
