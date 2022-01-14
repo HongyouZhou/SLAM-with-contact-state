@@ -25,7 +25,8 @@ ACTION_Y_STEP = [1, 0, -1, 0]
 NUM_ACTIONS = 4
 CONSTRAINT = [0, 1]  # 0 for CLOCKWISE, 1 for COUNTERCLOCKWISE
 G = nx.DiGraph()
-attrs = {}
+nodeAttrs = dict()
+edgeAttrs = dict()
 lastConstraint = 0
 
 duration = 0.5
@@ -123,7 +124,7 @@ def keepMoingInDirection(direction, constraint):
         pos_after_y = robot_grid_pos[1] + ACTION_Y_STEP[direction]
         pos_constraint_x = robot_grid_pos[0] + ACTION_X_STEP[constraint_dir]
         pos_constraint_y = robot_grid_pos[1] + ACTION_Y_STEP[constraint_dir]
-    return True
+    return constraint_dir
 
 
 def dummyHash(pos, measurement):
@@ -133,23 +134,38 @@ def dummyHash(pos, measurement):
 def slam():
     measurement = getMeasurment()
     startNode = dummyHash(robot_grid_pos, measurement)
-    attrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement}
+    nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement}
     G.add_node(startNode)
-
     lastNode = startNode
     # Find all node
     while 1:
-        if constraintFollowing(0):
-            measurement = getMeasurment()
-            curNode = dummyHash(robot_grid_pos, measurement)
-            if curNode in attrs:
-                G.add_edge(lastNode, curNode)
-                break
-            else:
-                attrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement}
-                G.add_node(curNode)
-                G.add_edge(lastNode, curNode)
-                lastNode = curNode
+        constraint_dir = constraintFollowing(0)
+        measurement = getMeasurment()
+        curNode = dummyHash(robot_grid_pos, measurement)
+        if curNode in nodeAttrs:
+            G.add_edge(lastNode, curNode)
+            edgeAttrs[(lastNode, curNode)] = constraint_dir
+            break
+        else:
+            nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement}
+            G.add_node(curNode)
+            G.add_edge(lastNode, curNode)
+            edgeAttrs[(lastNode, curNode)] = constraint_dir
+            lastNode = curNode
+
+    lastNode = startNode
+    while 1:
+        constraint_dir = constraintFollowing(1)
+        measurement = getMeasurment()
+        curNode = dummyHash(robot_grid_pos, measurement)
+        if curNode not in nodeAttrs:
+            return
+        else:
+            G.add_edge(lastNode, curNode)
+            edgeAttrs[(lastNode, curNode)] = constraint_dir
+            lastNode = curNode
+        if curNode == startNode:
+            break
     print("success!")
 
 
@@ -189,7 +205,12 @@ def main():
     initRobot()
     slam()
     pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
-    nx.draw(G, pos)
+    nx.draw(G, pos, labels={node: node for node in G.nodes()})
+    nx.draw_networkx_edge_labels(
+        G, pos,
+        edge_labels=edgeAttrs,
+        font_color='red'
+    )
     plt.show()
 
     PyBulletRobot.stopLogging()
