@@ -134,7 +134,7 @@ def dummyHash(pos, measurement):
 def slam():
     measurement = getMeasurment()
     startNode = dummyHash(robot_grid_pos, measurement)
-    nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement}
+    nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
     G.add_node(startNode)
     lastNode = startNode
     # Find all node
@@ -147,7 +147,7 @@ def slam():
             edgeAttrs[(lastNode, curNode)] = constraint_dir
             break
         else:
-            nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement}
+            nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
             G.add_node(curNode)
             G.add_edge(lastNode, curNode)
             edgeAttrs[(lastNode, curNode)] = constraint_dir
@@ -205,7 +205,8 @@ def main():
     initRobot()
     slam()
     pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
-    nx.draw(G, pos, labels={node: node for node in G.nodes()})
+    # nx.draw(G, pos, labels={node: node for node in G.nodes()})
+    nx.draw(G, pos, labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
     nx.draw_networkx_edge_labels(
         G, pos,
         edge_labels=edgeAttrs,
