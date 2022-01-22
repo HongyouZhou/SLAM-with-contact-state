@@ -140,7 +140,8 @@ def slam():
     #G.add_node(startNode)
     #lastNode = startNode
     # Find all node
-    r = 0
+    r = random.randint(0,1)
+    #r=1
     while 1:
         
         constraint_dir = constraintFollowing(r)
@@ -169,14 +170,14 @@ def slam():
             while 1:
                 if r == 0:
                     r=1
-                else :
-                    r=0
-                constraint_dir = constraintFollowing(r)
-                measurement = getMeasurment()
-                curNode = dummyHash(robot_grid_pos, measurement)
-                if curNode == lastNode:
-                    break
-            
+                
+                    constraint_dir = constraintFollowing(r)
+                    measurement = getMeasurment()
+                    curNode = dummyHash(robot_grid_pos, measurement)
+                    if curNode == lastNode:
+                        break
+                break
+                    
             break
         # else:
         #     G.add_edge(initNode, curNode)
