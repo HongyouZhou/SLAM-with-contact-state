@@ -1,3 +1,4 @@
+from numpy import random
 import numpy as np
 import pybullet as p
 import networkx as nx
@@ -11,7 +12,7 @@ MAZE_GRID = [[0, 1, 1, 0],
              [0, 1, 1, 0],
              [0, 0, 0, 0],
              [0, 0, 0, 0]]
-robot_grid_pos = [0, 0]
+robot_grid_pos = [0, 2]
 
 MAZE_POS = [0.5, -0.1, 0.91]
 CS1_OFFSET = [0.15, -0.06, 0.02]
@@ -132,40 +133,57 @@ def dummyHash(pos, measurement):
 
 
 def slam():
-    measurement = getMeasurment()
-    startNode = dummyHash(robot_grid_pos, measurement)
-    nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement}
-    G.add_node(startNode)
-    lastNode = startNode
+    init_measurement = getMeasurment()
+    initNode = dummyHash(robot_grid_pos, init_measurement)
+    #random = 
+    #nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement}
+    #G.add_node(startNode)
+    #lastNode = startNode
     # Find all node
+    r = 0
     while 1:
-        constraint_dir = constraintFollowing(0)
+        
+        constraint_dir = constraintFollowing(r)
         measurement = getMeasurment()
         curNode = dummyHash(robot_grid_pos, measurement)
-        if curNode in nodeAttrs:
-            G.add_edge(lastNode, curNode)
-            edgeAttrs[(lastNode, curNode)] = constraint_dir
-            break
-        else:
+        if init_measurement != measurement:
             nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement}
             G.add_node(curNode)
-            G.add_edge(lastNode, curNode)
-            edgeAttrs[(lastNode, curNode)] = constraint_dir
-            lastNode = curNode
+            lastNode =curNode
+            while 1:
+                constraint_dir = constraintFollowing(r)
+                measurement = getMeasurment()
+                curNode = dummyHash(robot_grid_pos, measurement)
+                if curNode in nodeAttrs:
+                    G.add_edge(lastNode, curNode)
+                    edgeAttrs[(curNode, lastNode)] = constraint_dir
+                    break
+                else:
+                    nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
+                    G.add_node(curNode)
+                    G.add_edge(lastNode, curNode)
+                    edgeAttrs[(lastNode, curNode)] = constraint_dir
+                    lastNode = curNode
 
-    lastNode = startNode
-    while 1:
-        constraint_dir = constraintFollowing(1)
-        measurement = getMeasurment()
-        curNode = dummyHash(robot_grid_pos, measurement)
-        if curNode not in nodeAttrs:
-            return
-        else:
-            G.add_edge(lastNode, curNode)
-            edgeAttrs[(lastNode, curNode)] = constraint_dir
-            lastNode = curNode
-        if curNode == startNode:
+            
+            while 1:
+                if r == 0:
+                    r=1
+                else :
+                    r=0
+                constraint_dir = constraintFollowing(r)
+                measurement = getMeasurment()
+                curNode = dummyHash(robot_grid_pos, measurement)
+                if curNode == lastNode:
+                    break
+            
             break
+        # else:
+        #     G.add_edge(initNode, curNode)
+        #     edgeAttrs[(initNode, curNode)] = constraint_dir
+        #     continue
+
+            
     print("success!")
 
 
