@@ -28,6 +28,7 @@ G = nx.DiGraph()
 nodeAttrs = dict()
 edgeAttrs = dict()
 lastConstraint = 0
+goalNode = None
 
 duration = 0.5
 maze = PyBulletObject(urdf_name='maze',
@@ -53,6 +54,12 @@ PyBulletRobot.use_inv_dyn = False
 
 def getCartPosFromIndex(x, y):
     return MAZE_ORIGIN_OFFSET + np.array([Y_CART_STEP_SIZE * y, X_CART_STEP_SIZE * x, 0.02])
+
+
+def robotGotoIndex(pos: list):
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=getCartPosFromIndex(pos[0], pos[1]),
+                                          desiredQuat=desired_quat_1,
+                                          duration=duration)
 
 
 def isWall(x, y):
@@ -99,9 +106,7 @@ def constraintFollowing(constraint):
             lastConstraint = (a - s) % NUM_ACTIONS
             robot_grid_pos[0] = pos_after_x
             robot_grid_pos[1] = pos_after_y
-            PyBulletRobot.gotoCartPositionAndQuat(desiredPos=getCartPosFromIndex(robot_grid_pos[0], robot_grid_pos[1]),
-                                                  desiredQuat=desired_quat_1,
-                                                  duration=duration)
+            robotGotoIndex(robot_grid_pos)
             return keepMoingInDirection(a, constraint)
 
 
@@ -117,9 +122,7 @@ def keepMoingInDirection(direction, constraint):
     while not isWall(pos_after_x, pos_after_y) and isWall(pos_constraint_x, pos_constraint_y):
         robot_grid_pos[0] = pos_after_x
         robot_grid_pos[1] = pos_after_y
-        PyBulletRobot.gotoCartPositionAndQuat(desiredPos=getCartPosFromIndex(robot_grid_pos[0], robot_grid_pos[1]),
-                                              desiredQuat=desired_quat_1,
-                                              duration=duration)
+        robotGotoIndex(robot_grid_pos)
         pos_after_x = robot_grid_pos[0] + ACTION_X_STEP[direction]
         pos_after_y = robot_grid_pos[1] + ACTION_Y_STEP[direction]
         pos_constraint_x = robot_grid_pos[0] + ACTION_X_STEP[constraint_dir]
@@ -127,11 +130,22 @@ def keepMoingInDirection(direction, constraint):
     return constraint_dir
 
 
+def moveUntilWall(direction):
+    pos_after_x = robot_grid_pos[0] + ACTION_X_STEP[direction]
+    pos_after_y = robot_grid_pos[1] + ACTION_Y_STEP[direction]
+    while not isWall(pos_after_x, pos_after_y):
+        robot_grid_pos[0] = pos_after_x
+        robot_grid_pos[1] = pos_after_y
+        robotGotoIndex(robot_grid_pos)
+        pos_after_x = robot_grid_pos[0] + ACTION_X_STEP[direction]
+        pos_after_y = robot_grid_pos[1] + ACTION_Y_STEP[direction]
+
+
 def dummyHash(pos, measurement):
     return ''.join(str(e) for e in pos + measurement)
 
 
-def slam():
+def initialMapping():
     measurement = getMeasurment()
     startNode = dummyHash(robot_grid_pos, measurement)
     nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
@@ -169,8 +183,66 @@ def slam():
     print("success!")
 
 
-# Correct edges
-# Add constrain direction
+def findAllByMeasurement(measurement):
+    res = []
+    for i in nodeAttrs:
+        if nodeAttrs[i]["measurement"] == measurement:
+            res.append(i)
+    return res
+
+
+def containsGoalNode(potentialNode):
+    for n in potentialNode:
+        if n == goalNode:
+            return True
+    return False
+
+
+# [1010]
+def pickOneDirection(measurement):
+    constraintList = []
+    for i, d in enumerate(measurement):
+        if d == 1:
+            if measurement[(i - 1) % NUM_ACTIONS] == 0:
+                constraintList.append((i - 1) % NUM_ACTIONS)
+            if measurement[(i + 1) % NUM_ACTIONS] == 0:
+                constraintList.append((i + 1) % NUM_ACTIONS)
+            return i, constraintList
+    return None
+
+
+def slam():
+    global robot_grid_pos
+    # robot_grid_pos[0] = 0
+    # robot_grid_pos[1] = 2
+    # robotGotoIndex(robot_grid_pos)
+    # robot_grid_pos[0] = 1
+    # robot_grid_pos[1] = 2
+    # robotGotoIndex(robot_grid_pos)
+
+    measurement = getMeasurment()
+    potentialNode = findAllByMeasurement(measurement)
+    if len(potentialNode) == 0:
+        moveUntilWall(0)
+        measurement = getMeasurment()
+        potentialNode = findAllByMeasurement(measurement)
+        while len(potentialNode) == 0:
+            d, constraintList = pickOneDirection(measurement)
+            keepMoingInDirection(d, constraintList[0])  # Heuristic
+            measurement = getMeasurment()
+            potentialNode = findAllByMeasurement(measurement)
+
+    while len(potentialNode) != 1:
+        constraintFollowing(0)
+        measurement = getMeasurment()
+        potentialNode = findAllByMeasurement(measurement)
+
+    return potentialNode[0]
+
+
+def solveMaze():
+    return None
+
 
 
 def initRobot():
@@ -203,6 +275,8 @@ def main():
     PyBulletRobot.startLogging()
 
     initRobot()
+    initialMapping()
+    goalNode = "031000"
     slam()
     pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
     # nx.draw(G, pos, labels={node: node for node in G.nodes()})
