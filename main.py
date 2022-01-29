@@ -229,7 +229,9 @@ def slam():
     measurement = getMeasurment()
     potentialNode = findAllByMeasurement(measurement)
     
-    
+    # fig1 = plt.figure()
+    # fig2 = plt.figure()
+
     if len(potentialNode) == 0:
         moveUntilWall(0)
         measurement = getMeasurment()
@@ -243,16 +245,18 @@ def slam():
             updatePlot(potentialNode)
 
     while len(potentialNode) != 1:
+
         updateNode(potentialNode)
         updatePlot(potentialNode)
-     
+        
         constraintFollowing(0)
         measurement = getMeasurment()
         potentialNode = findAllByMeasurement(measurement)
+        
         updateNode(potentialNode)
         updatePlot(potentialNode)
    
-        
+
     return potentialNode
 
 def solveMaze():
@@ -265,8 +269,10 @@ def updateNode(potentialNode):
         val_map.update(val)
 
     values = [val_map.get(node) for node in G.nodes()]
-    plt.figure()
+    
     pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
+    #plt.clf()
+    plt.figure()
     nx.draw(G, pos, labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
     nx.draw_networkx_edge_labels(
         G, pos,
@@ -275,10 +281,12 @@ def updateNode(potentialNode):
     )
     nx.draw(G, pos, cmap=plt.get_cmap('viridis'), node_color=values, with_labels=True,
                 font_color='white', labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
-    plt.show()
+    
+    plt.draw()
+    plt.pause(2)
 
 def updatePlot(potentialNode):
-    
+    print("updatePlot")
     total_nodes = G.nodes
     X = np.array(total_nodes)
     x = np.array([1,2,3,4,5,6])
@@ -298,12 +306,15 @@ def updatePlot(potentialNode):
     Y_ = X_Y_Spline(X_)
     
     # Plotting the Graph
+    plt.clf()
     plt.figure()
     plt.plot(X_, Y_)
     plt.title("Distribution of contact states")
     plt.xlabel("X")
     plt.ylabel("Y")
-    plt.show()
+    # plt.show(block=False)
+    plt.draw()
+    plt.pause(2)
 
 
 
