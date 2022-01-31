@@ -198,6 +198,13 @@ def containsGoalNode(potentialNode):
     return False
 
 
+def findParentByConstraint(edges, constraint):
+    for u, v in edges:
+        if edgeAttrs[(u, v)] == constraint:
+            return u
+    return None
+
+
 # [1010]
 def pickOneDirection(measurement):
     constraintList = []
@@ -222,20 +229,44 @@ def slam():
 
     measurement = getMeasurment()
     potentialNode = findAllByMeasurement(measurement)
+    preNode = None
+    first_constraint = None
     if len(potentialNode) == 0:
+        curNode = dummyHash(robot_grid_pos, measurement)
+        nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
+        G.add_node(curNode)
+
         moveUntilWall(0)
+
         measurement = getMeasurment()
         potentialNode = findAllByMeasurement(measurement)
+        preNode = curNode
         while len(potentialNode) == 0:
+            curNode = dummyHash(robot_grid_pos, measurement)
+            nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
+            G.add_node(curNode)
+            G.add_edge(preNode, curNode)
+            preNode = curNode
             d, constraintList = pickOneDirection(measurement)
             keepMoingInDirection(d, constraintList[0])  # Heuristic
+            first_constraint = constraintList[0]
             measurement = getMeasurment()
             potentialNode = findAllByMeasurement(measurement)
 
+    path = []
     while len(potentialNode) != 1:
-        constraintFollowing(0)
+        constraint_dir = constraintFollowing(0)
+        path.append(constraint_dir)
         measurement = getMeasurment()
         potentialNode = findAllByMeasurement(measurement)
+
+    if preNode is not None:
+        targetNode = potentialNode[0]
+        while len(path) != 0:
+            constraint_dir = path.pop()
+            targetNode = findParentByConstraint(G.in_edges(targetNode), constraint_dir)
+        G.add_edge(preNode, targetNode)
+        edgeAttrs[(preNode, targetNode)] = first_constraint
 
     return potentialNode[0]
 
