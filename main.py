@@ -6,6 +6,12 @@ from classic_framework.pybullet.PyBulletRobot import PyBulletRobot as Robot
 from classic_framework.pybullet.PyBulletScene import PyBulletScene as Scene
 from classic_framework.interface.Logger import RobotPlotFlags
 from classic_framework.pybullet.pb_utils.pybullet_scene_object import PyBulletObject
+from scipy.interpolate import make_interp_spline
+
+import matplotlib.animation as animation
+from matplotlib import style
+from threading import Thread
+
 
 MAZE_GRID = [[0, 1, 1, 0],
              [0, 1, 1, 0],
@@ -167,19 +173,19 @@ def initialMapping():
             edgeAttrs[(lastNode, curNode)] = constraint_dir
             lastNode = curNode
 
-    lastNode = startNode
-    while 1:
-        constraint_dir = constraintFollowing(1)
-        measurement = getMeasurment()
-        curNode = dummyHash(robot_grid_pos, measurement)
-        if curNode not in nodeAttrs:
-            return
-        else:
-            G.add_edge(lastNode, curNode)
-            edgeAttrs[(lastNode, curNode)] = constraint_dir
-            lastNode = curNode
-        if curNode == startNode:
-            break
+    # lastNode = startNode
+    # while 1:
+    #     constraint_dir = constraintFollowing(1)
+    #     measurement = getMeasurment()
+    #     curNode = dummyHash(robot_grid_pos, measurement)
+    #     if curNode not in nodeAttrs:
+    #         return
+    #     else:
+    #         G.add_edge(lastNode, curNode)
+    #         edgeAttrs[(lastNode, curNode)] = constraint_dir
+    #         lastNode = curNode
+    #     if curNode == startNode:
+    #         break
     print("success!")
 
 
@@ -252,13 +258,22 @@ def slam():
             first_constraint = constraintList[0]
             measurement = getMeasurment()
             potentialNode = findAllByMeasurement(measurement)
+            updateNode(potentialNode)
+            updatePlot(potentialNode)
 
     path = []
     while len(potentialNode) != 1:
+
+        updateNode(potentialNode)
+        updatePlot(potentialNode)
+        
         constraint_dir = constraintFollowing(0)
         path.append(constraint_dir)
         measurement = getMeasurment()
         potentialNode = findAllByMeasurement(measurement)
+        
+        updateNode(potentialNode)
+        updatePlot(potentialNode)
 
     if preNode is not None:
         targetNode = potentialNode[0]
@@ -267,12 +282,66 @@ def slam():
             targetNode = findParentByConstraint(G.in_edges(targetNode), constraint_dir)
         G.add_edge(preNode, targetNode)
         edgeAttrs[(preNode, targetNode)] = first_constraint
+   
 
-    return potentialNode[0]
-
+    return potentialNode
 
 def solveMaze():
     return None
+
+def updateNode(potentialNode):
+    val_map ={}
+    for i in range(len(potentialNode)):
+        val = {potentialNode[i]: 0.17}
+        val_map.update(val)
+
+    values = [val_map.get(node) for node in G.nodes()]
+    
+    pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
+    #plt.clf()
+    plt.figure()
+    nx.draw(G, pos, labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
+    nx.draw_networkx_edge_labels(
+        G, pos,
+        edge_labels=edgeAttrs,
+        font_color='red'
+    )
+    nx.draw(G, pos, cmap=plt.get_cmap('viridis'), node_color=values, with_labels=True,
+                font_color='white', labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
+    
+    plt.draw()
+    plt.pause(2)
+
+def updatePlot(potentialNode):
+    print("updatePlot")
+    total_nodes = G.nodes
+    X = np.array(total_nodes)
+    x = np.array([1,2,3,4,5,6])
+    y = np.array([0,0,0,0,0,0])
+    maximum = 5
+    len_nodes = len(potentialNode)
+    probability = (maximum-len_nodes+1)*20
+    
+    for i in range(len(potentialNode)):
+        val = potentialNode[i]
+        index = np.where(X == val)
+        y[index] = probability  
+
+    X_Y_Spline = make_interp_spline(x, y)
+
+    X_ = np.linspace(x.min(), x.max(), 500)
+    Y_ = X_Y_Spline(X_)
+    
+    # Plotting the Graph
+    plt.clf()
+    plt.figure()
+    plt.plot(X_, Y_)
+    plt.title("Distribution of contact states")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    # plt.show(block=False)
+    plt.draw()
+    plt.pause(2)
 
 
 
@@ -308,20 +377,12 @@ def main():
     initRobot()
     initialMapping()
     goalNode = "031000"
-    slam()
-    pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
-    # nx.draw(G, pos, labels={node: node for node in G.nodes()})
-    nx.draw(G, pos, labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
-    nx.draw_networkx_edge_labels(
-        G, pos,
-        edge_labels=edgeAttrs,
-        font_color='red'
-    )
-    plt.show()
 
+    slam()  
+    
     PyBulletRobot.stopLogging()
 
-    # PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
+    #PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
 
 
 if __name__ == '__main__':
