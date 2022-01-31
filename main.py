@@ -12,7 +12,6 @@ import matplotlib.animation as animation
 from matplotlib import style
 from threading import Thread
 
-
 MAZE_GRID = [[0, 1, 1, 0],
              [0, 1, 1, 0],
              [0, 0, 0, 0],
@@ -173,19 +172,19 @@ def initialMapping():
             edgeAttrs[(lastNode, curNode)] = constraint_dir
             lastNode = curNode
 
-    # lastNode = startNode
-    # while 1:
-    #     constraint_dir = constraintFollowing(1)
-    #     measurement = getMeasurment()
-    #     curNode = dummyHash(robot_grid_pos, measurement)
-    #     if curNode not in nodeAttrs:
-    #         return
-    #     else:
-    #         G.add_edge(lastNode, curNode)
-    #         edgeAttrs[(lastNode, curNode)] = constraint_dir
-    #         lastNode = curNode
-    #     if curNode == startNode:
-    #         break
+    lastNode = startNode
+    while 1:
+        constraint_dir = constraintFollowing(1)
+        measurement = getMeasurment()
+        curNode = dummyHash(robot_grid_pos, measurement)
+        if curNode not in nodeAttrs:
+            return
+        else:
+            G.add_edge(lastNode, curNode)
+            edgeAttrs[(lastNode, curNode)] = constraint_dir
+            lastNode = curNode
+        if curNode == startNode:
+            break
     print("success!")
 
 
@@ -226,12 +225,13 @@ def pickOneDirection(measurement):
 
 def slam():
     global robot_grid_pos
-    # robot_grid_pos[0] = 0
-    # robot_grid_pos[1] = 2
-    # robotGotoIndex(robot_grid_pos)
-    # robot_grid_pos[0] = 1
-    # robot_grid_pos[1] = 2
-    # robotGotoIndex(robot_grid_pos)
+    X, x, y, maximum, fig, ax, line1 = iniPlot()
+    robot_grid_pos[0] = 0
+    robot_grid_pos[1] = 2
+    robotGotoIndex(robot_grid_pos)
+    robot_grid_pos[0] = 1
+    robot_grid_pos[1] = 2
+    robotGotoIndex(robot_grid_pos)
 
     measurement = getMeasurment()
     potentialNode = findAllByMeasurement(measurement)
@@ -259,21 +259,19 @@ def slam():
             measurement = getMeasurment()
             potentialNode = findAllByMeasurement(measurement)
             updateNode(potentialNode)
-            updatePlot(potentialNode)
+            updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
 
     path = []
+    updateNode(potentialNode)
+    updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
     while len(potentialNode) != 1:
-
-        updateNode(potentialNode)
-        updatePlot(potentialNode)
-        
         constraint_dir = constraintFollowing(0)
         path.append(constraint_dir)
         measurement = getMeasurment()
         potentialNode = findAllByMeasurement(measurement)
-        
+
         updateNode(potentialNode)
-        updatePlot(potentialNode)
+        updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
 
     if preNode is not None:
         targetNode = potentialNode[0]
@@ -282,23 +280,27 @@ def slam():
             targetNode = findParentByConstraint(G.in_edges(targetNode), constraint_dir)
         G.add_edge(preNode, targetNode)
         edgeAttrs[(preNode, targetNode)] = first_constraint
-   
+
+    updateNode(potentialNode)
+    updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
 
     return potentialNode
+
 
 def solveMaze():
     return None
 
+
 def updateNode(potentialNode):
-    val_map ={}
+    val_map = {}
     for i in range(len(potentialNode)):
         val = {potentialNode[i]: 0.17}
         val_map.update(val)
 
     values = [val_map.get(node) for node in G.nodes()]
-    
+
     pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
-    #plt.clf()
+    # plt.clf()
     plt.figure()
     nx.draw(G, pos, labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
     nx.draw_networkx_edge_labels(
@@ -307,42 +309,46 @@ def updateNode(potentialNode):
         font_color='red'
     )
     nx.draw(G, pos, cmap=plt.get_cmap('viridis'), node_color=values, with_labels=True,
-                font_color='white', labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
-    
+            font_color='white', labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
+
     plt.draw()
     plt.pause(2)
 
-def updatePlot(potentialNode):
+
+def iniPlot():
+    X = np.array(G.nodes)
+    x = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    y = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    maximum = 7
+    # X_Y_Spline = make_interp_spline(x, y)
+    # X_ = np.linspace(x.min(), x.max(), 500)
+    # Y_ = X_Y_Spline(X_)
+
+    plt.ion()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    line1, = ax.plot(x, y, 'b-')
+    return X, x, y, maximum, fig, ax, line1
+
+
+def updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1):
     print("updatePlot")
-    total_nodes = G.nodes
-    X = np.array(total_nodes)
-    x = np.array([1,2,3,4,5,6])
-    y = np.array([0,0,0,0,0,0])
-    maximum = 5
+    X = np.array(G.nodes)
     len_nodes = len(potentialNode)
-    probability = (maximum-len_nodes+1)*20
-    
+    probability = (maximum - len_nodes + 1)
+
     for i in range(len(potentialNode)):
         val = potentialNode[i]
         index = np.where(X == val)
-        y[index] = probability  
+        y[index] = probability
 
     X_Y_Spline = make_interp_spline(x, y)
-
-    X_ = np.linspace(x.min(), x.max(), 500)
+    X_ = np.linspace(x.min(), x.max(), 50)
     Y_ = X_Y_Spline(X_)
-    
-    # Plotting the Graph
-    plt.clf()
-    plt.figure()
-    plt.plot(X_, Y_)
-    plt.title("Distribution of contact states")
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    # plt.show(block=False)
-    plt.draw()
-    plt.pause(2)
 
+    line1.set_ydata(y)
+    fig.canvas.draw()
+    fig.canvas.flush_events()
 
 
 def initRobot():
@@ -378,11 +384,11 @@ def main():
     initialMapping()
     goalNode = "031000"
 
-    slam()  
-    
+    slam()
+
     PyBulletRobot.stopLogging()
 
-    #PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
+    # PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
 
 
 if __name__ == '__main__':
