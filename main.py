@@ -225,13 +225,15 @@ def pickOneDirection(measurement):
 
 def slam():
     global robot_grid_pos
-    X, x, y, maximum, fig, ax, line1 = iniPlot()
-    robot_grid_pos[0] = 0
-    robot_grid_pos[1] = 2
-    robotGotoIndex(robot_grid_pos)
-    robot_grid_pos[0] = 1
-    robot_grid_pos[1] = 2
-    robotGotoIndex(robot_grid_pos)
+    X, x, y, maximum, fig, ax = iniPlot()
+    ax_n, fig_n = iniNode()
+    
+    # robot_grid_pos[0] = 0
+    # robot_grid_pos[1] = 2
+    # robotGotoIndex(robot_grid_pos)
+    # robot_grid_pos[0] = 1
+    # robot_grid_pos[1] = 2
+    # robotGotoIndex(robot_grid_pos)
 
     measurement = getMeasurment()
     potentialNode = findAllByMeasurement(measurement)
@@ -258,20 +260,21 @@ def slam():
             first_constraint = constraintList[0]
             measurement = getMeasurment()
             potentialNode = findAllByMeasurement(measurement)
-            updateNode(potentialNode)
-            updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
+            updateNode(potentialNode, ax_n, fig_n)
+            updatePlot(potentialNode, X, x, y, maximum, fig, ax)
 
     path = []
-    updateNode(potentialNode)
-    updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
+    updateNode(potentialNode, ax_n, fig_n)
+    updatePlot(potentialNode, X, x, y, maximum, fig, ax)
+
     while len(potentialNode) != 1:
         constraint_dir = constraintFollowing(0)
         path.append(constraint_dir)
         measurement = getMeasurment()
         potentialNode = findAllByMeasurement(measurement)
 
-        updateNode(potentialNode)
-        updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
+        updateNode(potentialNode, ax_n, fig_n)
+        updatePlot(potentialNode, X, x, y, maximum, fig, ax)
 
     if preNode is not None:
         targetNode = potentialNode[0]
@@ -281,8 +284,8 @@ def slam():
         G.add_edge(preNode, targetNode)
         edgeAttrs[(preNode, targetNode)] = first_constraint
 
-    updateNode(potentialNode)
-    updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1)
+    updateNode(potentialNode, ax_n, fig_n)
+    updatePlot(potentialNode, X, x, y, maximum, fig, ax)
 
     return potentialNode
 
@@ -290,18 +293,23 @@ def slam():
 def solveMaze():
     return None
 
+def iniNode():
+    plt.ion()
+    fig_n = plt.figure()
+    ax_n = fig_n.add_subplot(111)
+    return ax_n, fig_n
 
-def updateNode(potentialNode):
+def updateNode(potentialNode, ax_n, fig_n):
     val_map = {}
     for i in range(len(potentialNode)):
         val = {potentialNode[i]: 0.17}
         val_map.update(val)
 
     values = [val_map.get(node) for node in G.nodes()]
-
+    ax_n.clear()
     pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
-    # plt.clf()
-    plt.figure()
+    # # plt.clf()
+    # #plt.figure()
     nx.draw(G, pos, labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
     nx.draw_networkx_edge_labels(
         G, pos,
@@ -311,15 +319,16 @@ def updateNode(potentialNode):
     nx.draw(G, pos, cmap=plt.get_cmap('viridis'), node_color=values, with_labels=True,
             font_color='white', labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
 
-    plt.draw()
-    plt.pause(2)
+    fig_n.canvas.draw()
+    fig_n.canvas.flush_events()
+    plt.pause(3)
 
 
 def iniPlot():
     X = np.array(G.nodes)
-    x = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
     y = np.array([0, 0, 0, 0, 0, 0, 0, 0])
-    maximum = 7
+    maximum = 8
     # X_Y_Spline = make_interp_spline(x, y)
     # X_ = np.linspace(x.min(), x.max(), 500)
     # Y_ = X_Y_Spline(X_)
@@ -327,28 +336,33 @@ def iniPlot():
     plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    line1, = ax.plot(x, y, 'b-')
-    return X, x, y, maximum, fig, ax, line1
+    #line1, = ax.plot(x, y, 'b-')
+
+    return X, x, y, maximum, fig, ax
 
 
-def updatePlot(potentialNode, X, x, y, maximum, fig, ax, line1):
-    print("updatePlot")
+def updatePlot(potentialNode, X, x, y, maximum, fig, ax):
     X = np.array(G.nodes)
     len_nodes = len(potentialNode)
     probability = (maximum - len_nodes + 1)
+    ax.clear()
+    #x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+    y = np.array([0, 0, 0, 0, 0, 0, 0, 0])
 
     for i in range(len(potentialNode)):
         val = potentialNode[i]
         index = np.where(X == val)
         y[index] = probability
 
-    X_Y_Spline = make_interp_spline(x, y)
-    X_ = np.linspace(x.min(), x.max(), 50)
-    Y_ = X_Y_Spline(X_)
+    # X_Y_Spline = make_interp_spline(x, y)
+    # X_ = np.linspace(x.min(), x.max(), 50)
+    # Y_ = X_Y_Spline(X_)
 
-    line1.set_ydata(y)
+    ax.bar(x,y)
+    
     fig.canvas.draw()
     fig.canvas.flush_events()
+    
 
 
 def initRobot():
@@ -383,9 +397,10 @@ def main():
     initRobot()
     initialMapping()
     goalNode = "031000"
+    
 
     slam()
-
+    plt.pause(5)
     PyBulletRobot.stopLogging()
 
     # PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
