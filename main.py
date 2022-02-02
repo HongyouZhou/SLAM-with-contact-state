@@ -34,6 +34,7 @@ nodeAttrs = dict()
 edgeAttrs = dict()
 lastConstraint = 0
 goalNode = None
+val_node=[]
 
 duration = 0.5
 maze = PyBulletObject(urdf_name='maze',
@@ -225,6 +226,7 @@ def pickOneDirection(measurement):
 
 def slam():
     global robot_grid_pos
+    
     X, x, y, maximum, fig, ax = iniPlot()
     ax_n, fig_n = iniNode()
     
@@ -348,15 +350,30 @@ def updatePlot(potentialNode, X, x, y, maximum, fig, ax):
     ax.clear()
     #x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
     y = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    
+    #adj_node = []
+    nodes1 ={}
+
+    if len(val_node) != 0:
+        for j in range(len(val_node)):
+            val_j = val_node[j]
+            index_j = np.where(X == val_j)
+            y[index_j] = 0.5*probability 
 
     for i in range(len(potentialNode)):
         val = potentialNode[i]
         index = np.where(X == val)
+        # nodes1 = list(G.adj[potentialNode[0]])
+        # node_cs = [i for i in val_node if i in nodes1]
+        #adj_node.append(nodes1)
+        #for n in nodes1
+    
         y[index] = probability
+        val_node.append(potentialNode[i])
+        # if len(node_cs) != 0:
+        #     index1 = np.where(X == node_cs[0])
+        #     y[index1]=probability 
 
-    # X_Y_Spline = make_interp_spline(x, y)
-    # X_ = np.linspace(x.min(), x.max(), 50)
-    # Y_ = X_Y_Spline(X_)
 
     ax.bar(x,y)
     
@@ -400,7 +417,7 @@ def main():
     
 
     slam()
-    plt.pause(5)
+    plt.pause(10)
     PyBulletRobot.stopLogging()
 
     # PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
