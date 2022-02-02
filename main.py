@@ -353,26 +353,27 @@ def updatePlot(potentialNode, X, x, y, maximum, fig, ax):
     
     #adj_node = []
     nodes1 ={}
+
+    if len(val_node) != 0:
+        for j in range(len(val_node)):
+            val_j = val_node[j]
+            index_j = np.where(X == val_j)
+            y[index_j] = 0.5*probability 
+
     for i in range(len(potentialNode)):
         val = potentialNode[i]
         index = np.where(X == val)
-        # y[index] = probability
-        val_node.append(potentialNode[i])
-
-        nodes1 = list(G.adj[potentialNode[0]])
-        node_cs = [i for i in val_node if i in nodes1]
+        # nodes1 = list(G.adj[potentialNode[0]])
+        # node_cs = [i for i in val_node if i in nodes1]
         #adj_node.append(nodes1)
         #for n in nodes1
-        index = np.where(X == val)
+    
         y[index] = probability
-        if len(node_cs) != 0:
-            index1 = np.where(X == node_cs[0])
-            y[index1]=probability 
+        val_node.append(potentialNode[i])
+        # if len(node_cs) != 0:
+        #     index1 = np.where(X == node_cs[0])
+        #     y[index1]=probability 
 
-
-    # X_Y_Spline = make_interp_spline(x, y)
-    # X_ = np.linspace(x.min(), x.max(), 50)
-    # Y_ = X_Y_Spline(X_)
 
     ax.bar(x,y)
     
@@ -416,7 +417,7 @@ def main():
     
 
     slam()
-    plt.pause(5)
+    plt.pause(10)
     PyBulletRobot.stopLogging()
 
     # PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
