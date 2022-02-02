@@ -1,4 +1,3 @@
-from numpy import random
 import numpy as np
 import pybullet as p
 import networkx as nx
@@ -7,12 +6,17 @@ from classic_framework.pybullet.PyBulletRobot import PyBulletRobot as Robot
 from classic_framework.pybullet.PyBulletScene import PyBulletScene as Scene
 from classic_framework.interface.Logger import RobotPlotFlags
 from classic_framework.pybullet.pb_utils.pybullet_scene_object import PyBulletObject
+from scipy.interpolate import make_interp_spline
+
+import matplotlib.animation as animation
+from matplotlib import style
+from threading import Thread
 
 MAZE_GRID = [[0, 1, 1, 0],
              [0, 1, 1, 0],
              [0, 0, 0, 0],
              [0, 0, 0, 0]]
-robot_grid_pos = [0, 2]
+robot_grid_pos = [0, 0]
 
 MAZE_POS = [0.5, -0.1, 0.91]
 CS1_OFFSET = [0.15, -0.06, 0.02]
@@ -29,6 +33,8 @@ G = nx.DiGraph()
 nodeAttrs = dict()
 edgeAttrs = dict()
 lastConstraint = 0
+goalNode = None
+val_node=[]
 
 duration = 0.5
 maze = PyBulletObject(urdf_name='maze',
@@ -54,6 +60,12 @@ PyBulletRobot.use_inv_dyn = False
 
 def getCartPosFromIndex(x, y):
     return MAZE_ORIGIN_OFFSET + np.array([Y_CART_STEP_SIZE * y, X_CART_STEP_SIZE * x, 0.02])
+
+
+def robotGotoIndex(pos: list):
+    PyBulletRobot.gotoCartPositionAndQuat(desiredPos=getCartPosFromIndex(pos[0], pos[1]),
+                                          desiredQuat=desired_quat_1,
+                                          duration=duration)
 
 
 def isWall(x, y):
@@ -100,9 +112,7 @@ def constraintFollowing(constraint):
             lastConstraint = (a - s) % NUM_ACTIONS
             robot_grid_pos[0] = pos_after_x
             robot_grid_pos[1] = pos_after_y
-            PyBulletRobot.gotoCartPositionAndQuat(desiredPos=getCartPosFromIndex(robot_grid_pos[0], robot_grid_pos[1]),
-                                                  desiredQuat=desired_quat_1,
-                                                  duration=duration)
+            robotGotoIndex(robot_grid_pos)
             return keepMoingInDirection(a, constraint)
 
 
@@ -118,9 +128,7 @@ def keepMoingInDirection(direction, constraint):
     while not isWall(pos_after_x, pos_after_y) and isWall(pos_constraint_x, pos_constraint_y):
         robot_grid_pos[0] = pos_after_x
         robot_grid_pos[1] = pos_after_y
-        PyBulletRobot.gotoCartPositionAndQuat(desiredPos=getCartPosFromIndex(robot_grid_pos[0], robot_grid_pos[1]),
-                                              desiredQuat=desired_quat_1,
-                                              duration=duration)
+        robotGotoIndex(robot_grid_pos)
         pos_after_x = robot_grid_pos[0] + ACTION_X_STEP[direction]
         pos_after_y = robot_grid_pos[1] + ACTION_Y_STEP[direction]
         pos_constraint_x = robot_grid_pos[0] + ACTION_X_STEP[constraint_dir]
@@ -128,68 +136,249 @@ def keepMoingInDirection(direction, constraint):
     return constraint_dir
 
 
+def moveUntilWall(direction):
+    pos_after_x = robot_grid_pos[0] + ACTION_X_STEP[direction]
+    pos_after_y = robot_grid_pos[1] + ACTION_Y_STEP[direction]
+    while not isWall(pos_after_x, pos_after_y):
+        robot_grid_pos[0] = pos_after_x
+        robot_grid_pos[1] = pos_after_y
+        robotGotoIndex(robot_grid_pos)
+        pos_after_x = robot_grid_pos[0] + ACTION_X_STEP[direction]
+        pos_after_y = robot_grid_pos[1] + ACTION_Y_STEP[direction]
+
+
 def dummyHash(pos, measurement):
     return ''.join(str(e) for e in pos + measurement)
 
 
-def slam():
-    init_measurement = getMeasurment()
-    initNode = dummyHash(robot_grid_pos, init_measurement)
-    #random = 
-    #nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement}
-    #G.add_node(startNode)
-    #lastNode = startNode
+def initialMapping():
+    measurement = getMeasurment()
+    startNode = dummyHash(robot_grid_pos, measurement)
+    nodeAttrs[startNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
+    G.add_node(startNode)
+    lastNode = startNode
     # Find all node
-    r = random.randint(0,1)
-    #r=1
     while 1:
-        
-        constraint_dir = constraintFollowing(r)
+        constraint_dir = constraintFollowing(0)
         measurement = getMeasurment()
         curNode = dummyHash(robot_grid_pos, measurement)
-        if init_measurement != measurement:
-            nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement}
-            G.add_node(curNode)
-            lastNode =curNode
-            while 1:
-                constraint_dir = constraintFollowing(r)
-                measurement = getMeasurment()
-                curNode = dummyHash(robot_grid_pos, measurement)
-                if curNode in nodeAttrs:
-                    G.add_edge(lastNode, curNode)
-                    edgeAttrs[(curNode, lastNode)] = constraint_dir
-                    break
-                else:
-                    nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
-                    G.add_node(curNode)
-                    G.add_edge(lastNode, curNode)
-                    edgeAttrs[(lastNode, curNode)] = constraint_dir
-                    lastNode = curNode
-
-            
-            while 1:
-                if r == 0:
-                    r=1
-                
-                    constraint_dir = constraintFollowing(r)
-                    measurement = getMeasurment()
-                    curNode = dummyHash(robot_grid_pos, measurement)
-                    if curNode == lastNode:
-                        break
-                break
-                    
+        if curNode in nodeAttrs:
+            G.add_edge(lastNode, curNode)
+            edgeAttrs[(lastNode, curNode)] = constraint_dir
             break
-        # else:
-        #     G.add_edge(initNode, curNode)
-        #     edgeAttrs[(initNode, curNode)] = constraint_dir
-        #     continue
+        else:
+            nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
+            G.add_node(curNode)
+            G.add_edge(lastNode, curNode)
+            edgeAttrs[(lastNode, curNode)] = constraint_dir
+            lastNode = curNode
 
-            
+    lastNode = startNode
+    while 1:
+        constraint_dir = constraintFollowing(1)
+        measurement = getMeasurment()
+        curNode = dummyHash(robot_grid_pos, measurement)
+        if curNode not in nodeAttrs:
+            return
+        else:
+            G.add_edge(lastNode, curNode)
+            edgeAttrs[(lastNode, curNode)] = constraint_dir
+            lastNode = curNode
+        if curNode == startNode:
+            break
     print("success!")
 
 
-# Correct edges
-# Add constrain direction
+def findAllByMeasurement(measurement):
+    res = []
+    for i in nodeAttrs:
+        if nodeAttrs[i]["measurement"] == measurement:
+            res.append(i)
+    return res
+
+
+def containsGoalNode(potentialNode):
+    for n in potentialNode:
+        if n == goalNode:
+            return True
+    return False
+
+
+def findParentByConstraint(edges, constraint):
+    for u, v in edges:
+        if edgeAttrs[(u, v)] == constraint:
+            return u
+    return None
+
+
+# [1010]
+def pickOneDirection(measurement):
+    constraintList = []
+    for i, d in enumerate(measurement):
+        if d == 1:
+            if measurement[(i - 1) % NUM_ACTIONS] == 0:
+                constraintList.append((i - 1) % NUM_ACTIONS)
+            if measurement[(i + 1) % NUM_ACTIONS] == 0:
+                constraintList.append((i + 1) % NUM_ACTIONS)
+            return i, constraintList
+    return None
+
+
+def slam():
+    global robot_grid_pos
+    
+    X, x, y, maximum, fig, ax = iniPlot()
+    ax_n, fig_n = iniNode()
+    
+    # robot_grid_pos[0] = 0
+    # robot_grid_pos[1] = 2
+    # robotGotoIndex(robot_grid_pos)
+    # robot_grid_pos[0] = 1
+    # robot_grid_pos[1] = 2
+    # robotGotoIndex(robot_grid_pos)
+
+    measurement = getMeasurment()
+    potentialNode = findAllByMeasurement(measurement)
+    preNode = None
+    first_constraint = None
+    if len(potentialNode) == 0:
+        curNode = dummyHash(robot_grid_pos, measurement)
+        nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
+        G.add_node(curNode)
+
+        moveUntilWall(0)
+
+        measurement = getMeasurment()
+        potentialNode = findAllByMeasurement(measurement)
+        preNode = curNode
+        while len(potentialNode) == 0:
+            curNode = dummyHash(robot_grid_pos, measurement)
+            nodeAttrs[curNode] = {"pos": robot_grid_pos, "measurement": measurement, "CS": len(G.nodes())}
+            G.add_node(curNode)
+            G.add_edge(preNode, curNode)
+            preNode = curNode
+            d, constraintList = pickOneDirection(measurement)
+            keepMoingInDirection(d, constraintList[0])  # Heuristic
+            first_constraint = constraintList[0]
+            measurement = getMeasurment()
+            potentialNode = findAllByMeasurement(measurement)
+            updateNode(potentialNode, ax_n, fig_n)
+            updatePlot(potentialNode, X, x, y, maximum, fig, ax)
+
+    path = []
+    updateNode(potentialNode, ax_n, fig_n)
+    updatePlot(potentialNode, X, x, y, maximum, fig, ax)
+
+    while len(potentialNode) != 1:
+        constraint_dir = constraintFollowing(0)
+        path.append(constraint_dir)
+        measurement = getMeasurment()
+        potentialNode = findAllByMeasurement(measurement)
+
+        updateNode(potentialNode, ax_n, fig_n)
+        updatePlot(potentialNode, X, x, y, maximum, fig, ax)
+
+    if preNode is not None:
+        targetNode = potentialNode[0]
+        while len(path) != 0:
+            constraint_dir = path.pop()
+            targetNode = findParentByConstraint(G.in_edges(targetNode), constraint_dir)
+        G.add_edge(preNode, targetNode)
+        edgeAttrs[(preNode, targetNode)] = first_constraint
+
+    updateNode(potentialNode, ax_n, fig_n)
+    updatePlot(potentialNode, X, x, y, maximum, fig, ax)
+
+    return potentialNode
+
+
+def solveMaze():
+    return None
+
+def iniNode():
+    plt.ion()
+    fig_n = plt.figure()
+    ax_n = fig_n.add_subplot(111)
+    return ax_n, fig_n
+
+def updateNode(potentialNode, ax_n, fig_n):
+    val_map = {}
+    for i in range(len(potentialNode)):
+        val = {potentialNode[i]: 0.17}
+        val_map.update(val)
+
+    values = [val_map.get(node) for node in G.nodes()]
+    ax_n.clear()
+    pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
+    # # plt.clf()
+    # #plt.figure()
+    nx.draw(G, pos, labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
+    nx.draw_networkx_edge_labels(
+        G, pos,
+        edge_labels=edgeAttrs,
+        font_color='red'
+    )
+    nx.draw(G, pos, cmap=plt.get_cmap('viridis'), node_color=values, with_labels=True,
+            font_color='white', labels={node: nodeAttrs[node]["CS"] for node in G.nodes()})
+
+    fig_n.canvas.draw()
+    fig_n.canvas.flush_events()
+    plt.pause(3)
+
+
+def iniPlot():
+    X = np.array(G.nodes)
+    x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+    y = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    maximum = 8
+    # X_Y_Spline = make_interp_spline(x, y)
+    # X_ = np.linspace(x.min(), x.max(), 500)
+    # Y_ = X_Y_Spline(X_)
+
+    plt.ion()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    #line1, = ax.plot(x, y, 'b-')
+
+    return X, x, y, maximum, fig, ax
+
+
+def updatePlot(potentialNode, X, x, y, maximum, fig, ax):
+    X = np.array(G.nodes)
+    len_nodes = len(potentialNode)
+    probability = (maximum - len_nodes + 1)
+    ax.clear()
+    #x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+    y = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    
+    #adj_node = []
+    nodes1 ={}
+    for i in range(len(potentialNode)):
+        val = potentialNode[i]
+        index = np.where(X == val)
+        # y[index] = probability
+        val_node.append(potentialNode[i])
+
+        nodes1 = list(G.adj[potentialNode[0]])
+        node_cs = [i for i in val_node if i in nodes1]
+        #adj_node.append(nodes1)
+        #for n in nodes1
+        index = np.where(X == val)
+        y[index] = probability
+        if len(node_cs) != 0:
+            index1 = np.where(X == node_cs[0])
+            y[index1]=probability 
+
+
+    # X_Y_Spline = make_interp_spline(x, y)
+    # X_ = np.linspace(x.min(), x.max(), 50)
+    # Y_ = X_Y_Spline(X_)
+
+    ax.bar(x,y)
+    
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+    
 
 
 def initRobot():
@@ -222,16 +411,12 @@ def main():
     PyBulletRobot.startLogging()
 
     initRobot()
-    slam()
-    pos = nx.spring_layout(G, seed=225)  # Seed for reproducible layout
-    nx.draw(G, pos, labels={node: node for node in G.nodes()})
-    nx.draw_networkx_edge_labels(
-        G, pos,
-        edge_labels=edgeAttrs,
-        font_color='red'
-    )
-    plt.show()
+    initialMapping()
+    goalNode = "031000"
+    
 
+    slam()
+    plt.pause(5)
     PyBulletRobot.stopLogging()
 
     # PyBulletRobot.logger.plot(RobotPlotFlags.END_EFFECTOR | RobotPlotFlags.JOINTS)
