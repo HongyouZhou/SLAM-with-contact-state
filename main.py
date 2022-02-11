@@ -34,7 +34,7 @@ nodeAttrs = dict()
 edgeAttrs = dict()
 lastConstraint = 0
 goalNode = None
-val_node=[]
+val_node = []
 
 duration = 0.5
 maze = PyBulletObject(urdf_name='maze',
@@ -226,10 +226,10 @@ def pickOneDirection(measurement):
 
 def slam():
     global robot_grid_pos
-    
+
     X, x, y, maximum, fig, ax = iniPlot()
     ax_n, fig_n = iniNode()
-    
+
     # robot_grid_pos[0] = 0
     # robot_grid_pos[1] = 2
     # robotGotoIndex(robot_grid_pos)
@@ -295,11 +295,13 @@ def slam():
 def solveMaze():
     return None
 
+
 def iniNode():
     plt.ion()
     fig_n = plt.figure()
     ax_n = fig_n.add_subplot(111)
     return ax_n, fig_n
+
 
 def updateNode(potentialNode, ax_n, fig_n):
     val_map = {}
@@ -323,7 +325,7 @@ def updateNode(potentialNode, ax_n, fig_n):
 
     fig_n.canvas.draw()
     fig_n.canvas.flush_events()
-    plt.pause(3)
+    ax_n.set_title('Mapping')
 
 
 def iniPlot():
@@ -338,7 +340,7 @@ def iniPlot():
     plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    #line1, = ax.plot(x, y, 'b-')
+    # line1, = ax.plot(x, y, 'b-')
 
     return X, x, y, maximum, fig, ax
 
@@ -348,38 +350,41 @@ def updatePlot(potentialNode, X, x, y, maximum, fig, ax):
     len_nodes = len(potentialNode)
     probability = (maximum - len_nodes + 1)
     ax.clear()
-    #x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+    # x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
     y = np.array([0, 0, 0, 0, 0, 0, 0, 0])
-    
-    #adj_node = []
-    nodes1 ={}
+
+    # adj_node = []
+    nodes1 = {}
 
     if len(val_node) != 0:
         for j in range(len(val_node)):
             val_j = val_node[j]
             index_j = np.where(X == val_j)
-            y[index_j] = 0.5*probability 
+            y[index_j] = 0.5 * probability
 
     for i in range(len(potentialNode)):
         val = potentialNode[i]
         index = np.where(X == val)
         # nodes1 = list(G.adj[potentialNode[0]])
         # node_cs = [i for i in val_node if i in nodes1]
-        #adj_node.append(nodes1)
-        #for n in nodes1
-    
+        # adj_node.append(nodes1)
+        # for n in nodes1
+
         y[index] = probability
         val_node.append(potentialNode[i])
         # if len(node_cs) != 0:
         #     index1 = np.where(X == node_cs[0])
         #     y[index1]=probability 
 
+    y = y / np.sum(y)
 
-    ax.bar(x,y)
-    
+    ax.bar(x, y)
+    ax.set_xlabel('Contact State')
+    ax.set_ylabel('Belief')
+    ax.set_title('Localizing the Contact State')
+
     fig.canvas.draw()
     fig.canvas.flush_events()
-    
 
 
 def initRobot():
@@ -414,7 +419,6 @@ def main():
     initRobot()
     initialMapping()
     goalNode = "031000"
-    
 
     slam()
     plt.pause(10)
