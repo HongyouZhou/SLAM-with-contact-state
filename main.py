@@ -16,13 +16,21 @@ MAZE_GRID = [[0, 1, 1, 0],
              [0, 1, 1, 0],
              [0, 0, 0, 0],
              [0, 0, 0, 0]]
+
+MAZE2_GRID = [[0, 1, 1, 1, 1, 1, 1, 0],
+              [0, 1, 1, 1, 1, 1, 1, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0]]
+
 robot_grid_pos = [0, 0]
 
 MAZE_POS = [0.5, -0.1, 0.91]
 CS1_OFFSET = [0.15, -0.06, 0.02]
+CS1_OFFSET = [0.15, -0.14, 0.02]
 Y_CART_STEP_SIZE = -0.04
 X_CART_STEP_SIZE = 0.04
 MAZE_ORIGIN_OFFSET = np.array(MAZE_POS) + np.array(CS1_OFFSET)
+URDF_NAME = 'maze'
 
 # Actions lookup table up right down left
 ACTION_X_STEP = [0, 1, 0, -1]
@@ -37,12 +45,13 @@ goalNode = None
 val_node = []
 
 duration = 0.5
-maze = PyBulletObject(urdf_name='maze',
+maze = PyBulletObject(urdf_name=URDF_NAME,
                       object_name='maze',
                       position=MAZE_POS,
                       orientation=[0, 0, 0],
                       data_dir=None)
-
+MAZE_GRID = MAZE2_GRID
+CS1_OFFSET = [0.15, -0.14, 0.02]
 stick_pos = list(map(sum, zip(MAZE_POS, CS1_OFFSET)))
 stick = PyBulletObject(urdf_name='stick',
                        object_name='stick',

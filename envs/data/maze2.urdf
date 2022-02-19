@@ -1,5 +1,5 @@
 <?xml version="0.0" ?>
-<robot name="maze2.urdf">
+<robot name="cube.urdf">
     <link name="wall1">
         <contact>
             <lateral_friction value="1.0"/>
@@ -11,9 +11,9 @@
             <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
         </inertial>
         <visual>
-            <origin rpy="0 0 0" xyz="-0.05 0 0"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <box size=".01 .18 .05"/>
+                <box size=".01 .34 .05"/>
             </geometry>
             <material name="red">
                 <color rgba="1 0 0 1"/>
@@ -21,14 +21,14 @@
         </visual>
         <collision>
             <geometry>
-                <box size=".01 .18 .05"/>
+                <box size=".01 .34 .05"/>
             </geometry>
         </collision>
     </link>
     <joint name="wall1_wall2_joint" type="fixed">
         <parent link="wall1"/>
         <child link="wall2"/>
-        <origin rpy="0 0 0" xyz=".09 -.085 0"/>
+        <origin rpy="0 0 0" xyz=".09 -.165 0"/>
     </joint>
     <link name="wall2">
         <contact>
@@ -41,9 +41,9 @@
             <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
         </inertial>
         <visual>
-            <origin rpy="0 0 0" xyz="-.03 0 0"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <box size=".23 .01 .05"/>
+                <box size=".17 .01 .05"/>
             </geometry>
             <material name="red">
                 <color rgba="1 0 0 1"/>
@@ -118,7 +118,7 @@
     <joint name="wall4_wall5_joint" type="fixed">
         <parent link="wall4"/>
         <child link="wall5"/>
-        <origin rpy="0 0 0" xyz="-.045 .035 0"/>
+        <origin rpy="0 0 0" xyz="-.045 .115 0"/>
     </joint>
     <link name="wall5">
         <contact>
@@ -133,7 +133,7 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <box size=".01 .08 .05"/>
+                <box size=".01 .24 .05"/>
             </geometry>
             <material name="red">
                 <color rgba="1 0 0 1"/>
@@ -141,14 +141,14 @@
         </visual>
         <collision>
             <geometry>
-                <box size=".01 .08 .05"/>
+                <box size=".01 .24 .05"/>
             </geometry>
         </collision>
     </link>
     <joint name="wall5_wall6_joint" type="fixed">
         <parent link="wall5"/>
         <child link="wall6"/>
-        <origin rpy="0 0 0" xyz=".045 .035 0"/>
+        <origin rpy="0 0 0" xyz=".045 .115 0"/>
     </joint>
     <link name="wall6">
         <contact>
@@ -221,9 +221,9 @@
             <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
         </inertial>
         <visual>
-            <origin rpy="0 0 0" xyz="-.03 0 0"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <box size=".23 .01 .05"/>
+                <box size=".17 .01 .05"/>
             </geometry>
             <material name="red">
                 <color rgba="1 0 0 1"/>
