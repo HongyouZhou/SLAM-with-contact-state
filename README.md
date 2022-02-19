@@ -297,4 +297,7 @@ For an example see ```pick_and_place_env.py```.
 	       . For example, if you set ```nsubsteps=10``` and ```timestep=0.001``` then you only need the call 
 	       ```sim.step()``` 100 times to advance your simulation for one second wall clock time. Note that the
 	        ```timestep``` attribute is often used interchangeably with ```dt```.  
+		
+### How to use
+1. Run `main.py`, and check result in the console. The Simulation, Graph and Plots will run automatically.
 
