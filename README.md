@@ -151,3 +151,11 @@ then everything is gone.
 -	There are 2 maze model provided in this repository, chose one you like for demonstration.
 -	Change the `URDF_NAME` in `main.py` to the model you want to load, and run the script to see the demonstration.
 
+## Global Variable Explain
+- `MAZE_GRID` is the virtual map of current maze. As we rasterized the maze, the location in the map can be described by a 2d array, in which 1 means unreachable and 0 means reachable.
+- `robot_grid_pos` Current end effector position in the grid.
+- `MAZE_POS` The cartesian position of the maze.
+- `CS1_OFFSET` The cartesian offset of cs1 regarding the maze position
+- `*_CART_STEP_SIZE` Step size to define how far is between 2 grid.
+- `CONSTRAINT` Constraint following parameter, 0 for clockwise, 1 for counter-clockwise
+- `URDF_NAME` The urdf filename to define the maze.
