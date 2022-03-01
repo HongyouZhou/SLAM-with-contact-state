@@ -12,6 +12,7 @@ import matplotlib.animation as animation
 from matplotlib import style
 from threading import Thread
 
+# Maze map definition 1 is unreachable, 0 is reachable
 MAZE_GRID = [[0, 1, 1, 0],
              [0, 1, 1, 0],
              [0, 0, 0, 0],
@@ -22,11 +23,13 @@ MAZE2_GRID = [[0, 1, 1, 1, 1, 1, 1, 0],
               [0, 0, 0, 0, 0, 0, 0, 0],
               [0, 0, 0, 0, 0, 0, 0, 0]]
 
+# Robot postion in maze grid
 robot_grid_pos = [0, 0]
-
+# Maze cartesian position
 MAZE_POS = [0.5, -0.1, 0.91]
+# Cs1 cartesian offset
 CS1_OFFSET = [0.15, -0.06, 0.02]
-CS1_OFFSET = [0.15, -0.14, 0.02]
+# CS1_OFFSET = [0.15, -0.14, 0.02]
 Y_CART_STEP_SIZE = -0.04
 X_CART_STEP_SIZE = 0.04
 MAZE_ORIGIN_OFFSET = np.array(MAZE_POS) + np.array(CS1_OFFSET)
@@ -43,15 +46,15 @@ edgeAttrs = dict()
 lastConstraint = 0
 goalNode = None
 val_node = []
-
+# Action duration
 duration = 0.5
+# Initial maze model
 maze = PyBulletObject(urdf_name=URDF_NAME,
                       object_name='maze',
                       position=MAZE_POS,
                       orientation=[0, 0, 0],
                       data_dir=None)
-MAZE_GRID = MAZE2_GRID
-CS1_OFFSET = [0.15, -0.14, 0.02]
+# Initial stick model
 stick_pos = list(map(sum, zip(MAZE_POS, CS1_OFFSET)))
 stick = PyBulletObject(urdf_name='stick',
                        object_name='stick',
@@ -59,10 +62,10 @@ stick = PyBulletObject(urdf_name='stick',
                        orientation=[0, 0, 0],
                        data_dir=None)
 desired_quat_1 = [0, 1, 0, 0]
-
 object_list = [maze, stick]
+# Initial scene
 scene = Scene(object_list=object_list)
-
+# Initial Robot
 PyBulletRobot = Robot(p, scene, gravity_comp=True)
 PyBulletRobot.use_inv_dyn = False
 
@@ -220,7 +223,6 @@ def findParentByConstraint(edges, constraint):
     return None
 
 
-# [1010]
 def pickOneDirection(measurement):
     constraintList = []
     for i, d in enumerate(measurement):
@@ -383,7 +385,7 @@ def updatePlot(potentialNode, X, x, y, maximum, fig, ax):
         val_node.append(potentialNode[i])
         # if len(node_cs) != 0:
         #     index1 = np.where(X == node_cs[0])
-        #     y[index1]=probability 
+        #     y[index1]=probability
 
     y = y / np.sum(y)
 
@@ -427,7 +429,6 @@ def main():
 
     initRobot()
     initialMapping()
-    goalNode = "031000"
 
     slam()
     plt.pause(10)
