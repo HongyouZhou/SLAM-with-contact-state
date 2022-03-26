@@ -1,4 +1,3 @@
-<?xml version="0.0" ?>
 <robot name="cube.urdf">
     <link name="wall1">
         <contact>
