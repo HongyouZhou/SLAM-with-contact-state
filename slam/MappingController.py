@@ -27,10 +27,22 @@ class MappingController:
     def add_nodes(self, parent_cs, node_name):
         """ compare the observation with database, to decide whether add a node into the map
         """
-        pass
+        self.map.add_node(node_name)
+        self.map.add_edge(parent_cs, node_name)
 
     def initial_transition_matrix(self):
         """ create three transition matrices include transition probability, orientation and force patterns
         """
         # get all contact states
-        pass
+        self.all_css = list(set(sum(list(self.cs_map.values()), [])))
+        self.num_cs = len(self.all_css)
+
+        for cs in self.all_css:
+            self.map.add_node(cs)
+            self.map.add_edge(cs, cs, action=[0, 0, 0])
+
+        # construct transition matrix from config file
+        for trans_label in self.cs_map.keys():
+            transition = self.cs_map[trans_label]
+            self.map.add_edge(transition[0], transition[1])
+        self.trans_prob_mat = nx.adj_matrix(self.map).toarray()

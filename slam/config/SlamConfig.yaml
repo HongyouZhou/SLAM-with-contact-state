@@ -1,0 +1,88 @@
+# controller parameter
+velocity_filter_gain: 0.05
+
+# Construct transition maps
+init_state: 6
+terminate_state: 5
+cs_map: # this class contains the edges and corresponded cs pairs
+  1: [6, 2]
+  2: [2, 5]
+  3: [5, 6]
+  4: [4, 5]
+  5: [1, 3]
+  6: [3, 4]
+
+# Action space. We define here the action space as +z, -z, +x, -x, +y, -y in base frame
+action_space: [0, 1, 2, 3, 4, 5]
+num_actions: 6
+
+# we manually define which controller should be instantiated in cs.
+# the action primitives are defined by motion directions cope with estimator+controller
+cs_action_map:
+  1: [0,-1, 0]
+  2: [0,-1, 0]
+  3: [0, 0, 1]
+  4: [0,-1, 0]
+  5: [-1,0, 0]
+  6: [0, 0, 1]
+
+# contact states sensory patterns. We currently only used movable ability as feature
+cs_measurement_model:
+  6: [1, 0, 0, 0, 0, 0] # can only move up
+  2: [0, 1, 1, 1, 1, 0] # can move forward and backward and move right
+  5: [0, 1, 1, 1, 0, 1] # can move forward and backward and move left
+  1: [1, 0, 0, 0, 1, 0] # can move up and move right
+  3: [1, 0, 0, 0, 0, 1] # can move up and move left
+  4: [0, 0, 1, 1, 1, 1] # can move forward and backward, can move left and right
+
+## Configuration for action selection
+# action to measurement as index
+action_to_measurement:
+  "[1, 0, 0]": 2
+  "[-1, 0, 0]": 3
+  "[0, 1, 0]": 4
+  "[0, -1, 0]": 5
+  "[0, 0, 1]": 0
+  "[0, 0, -1]": 1
+
+measurement_to_action:
+  0: [0, 0, 1]
+  1: [0, 0, -1]
+  2: [1, 0, 0]
+  3: [-1, 0, 0]
+  4: [0, 1, 0]
+  5: [0, -1, 0]
+
+# controller parameters
+explore_vel_scalar: 0.1
+explore_kp: [ 0, 0, 0, 0, 0, 0 ]
+explore_kv: [ 130, 130, 130, 2, 2, 2 ]
+explore_completion_time: 0.4
+backing_completion_time: 0.5
+action_execution_time: 0.5
+explore_min_dist_threshold: 0.01
+min_dist_threshold: 0.003
+
+## Data Loader Config
+experiment_path: "/home/lx/experiments/lx/local_experiments/" ## this value is unused
+#experiment_name: "2112LatchLock"
+use_scaling: False
+dof: 7
+
+# Do we filter the raw data and what is the kernel size (smoothing_factor)
+filtering: True
+smoothing_factor: 10
+
+traj_data_structure: ["base_ht_ee", "base_p_ee", "base_v_ee", "ee_v_ee", "q", "dq", "base_ft_robot",
+                      "torque", "ee_ft_robot", "ft_handle", "ee_ft_handle", "base_ft_handle",
+                      "action_index", "demo_index"]
+
+base_htransform_obj: [0.015894824790962825, -0.9998147696252017, 0.010852694788361358, 0.7568015418946129,
+                      0.9987569027704338, 0.01638899168994956, 0.0470749415272773, -0.028722284944842108,
+                      -0.04724408654291461, 0.010090955885915735, 0.9988324028064138, -0.09124234697834588,
+                      0.0, 0.0, 0.0, 1.0]
+
+obj_htransform_base: [0.015894824790962825, 0.9987569027704338, -0.04724408654291461, 0.01234663080710751,
+                      -0.9998147696252017, 0.01638899168994956, 0.010090955885915735, 0.7580491089225485,
+                      0.010852694788361358, 0.0470749415272773, 0.9988324028064138, 0.08427416483044095,
+                      0.0, 0.0, 0.0, 1.0]
