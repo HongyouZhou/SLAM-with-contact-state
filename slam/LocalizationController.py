@@ -32,7 +32,7 @@ class LocalizationController:
         self.last_desired_action = None
 
         # controller parameters
-        self.explore_vel_scalar = config["explore_vel_scalar"]
+        self.explore_scalar = config["explore_scalar"]
 
     def reduce_uncertainty(self):
         """
@@ -115,7 +115,7 @@ class LocalizationController:
         dists = []
         for key in execution_results.keys():
             desired_actions.append(json.loads(key))
-            before_p_ee = execution_results[key]["before_p"]
+            before_p_ee = execution_results[key]["before_p_ee"]
             after_p_ee = execution_results[key]["after_p_ee"]
             base_trans_ee = after_p_ee[:3] - before_p_ee[:3]
             base_trans_ee_s.append(base_trans_ee)
@@ -176,7 +176,7 @@ class LocalizationController:
         #   1. self.loc_state_collector
         #   2. self.arm_ctrl
         if init_p_ee is None:
-            init_p_ee = self.robot.get_end_effector_pos()
+            init_p_ee = np.array(self.robot.get_end_effector_pos())
 
         # save local exploration result as a dictionary
         exploration_results = dict()
@@ -184,13 +184,15 @@ class LocalizationController:
         for explore in exploration_actions:
             # concert desired action to string so as to set it as key
             exploration_results[str(explore)] = dict()
-            d_base_p_ee = self.config["explore_vel_scalar"] * np.array(explore + init_p_ee)
+            d_base_p_ee = (self.explore_scalar * np.array(explore)) + np.array(init_p_ee)
             # Record measurement before
             exploration_results[str(explore)]["before_p_ee"] = self.robot.get_end_effector_pos()
             # Do exploration
             self.robot.gotoCartPositionAndQuat(desiredPos=d_base_p_ee, desiredQuat=DESIRED_QUAT, duration=DURATION)
             # Record measurement after
             exploration_results[str(explore)]["after_p_ee"] = self.robot.get_end_effector_pos()
+            # Back to original position
+            self.robot.gotoCartPositionAndQuat(desiredPos=init_p_ee, desiredQuat=DESIRED_QUAT, duration=DURATION)
 
         return exploration_results
 
@@ -209,7 +211,7 @@ class LocalizationController:
         # concert desired action to string so as to set it as key
         execution_time = self.config["action_execution_time"]
 
-        d_base_p_ee = self.config["explore_vel_scalar"] * np.array(desired_action + self.robot.get_end_effector_pos())
+        d_base_p_ee = (self.explore_scalar * np.array(desired_action)) + np.array(self.robot.get_end_effector_pos())
         # Record measurement before
         execution_results[str(desired_action)]["before_p_ee"] = self.robot.get_end_effector_pos()
         # Do exploration
@@ -236,8 +238,8 @@ class LocalizationController:
             # dist = np.linalg.norm(curt_state_df["base_p_ee"][:3] - end_pose)
             # first we should predict
             self.predict()
-            desired_action = self.get_action_by_belief()
-            execution_results = self.do_action(desired_action=desired_action)
+            desired_actions = self.get_action_by_belief()
+            execution_results = self.do_action(desired_action=desired_actions[0])
             self.last_desired_action = desired_action
             # use the observation to update the belief
             self.update(execution_results)
@@ -246,9 +248,9 @@ class LocalizationController:
             # self.bs_publisher.publish(bs_msg)
 
     def getCartPosFromIndex(self, x, y):
-        return config.MAZE_ORIGIN_OFFSET + \
-               np.array([config.Y_CART_STEP_SIZE * y,
-                         config.X_CART_STEP_SIZE * x, 0.02])
+        return MAZE_ORIGIN_OFFSET + \
+               np.array([Y_CART_STEP_SIZE * y,
+                         X_CART_STEP_SIZE * x, 0.02])
 
     def initRobot(self):
         # init_pos = PyBulletRobot.current_c_pos
@@ -274,7 +276,7 @@ class LocalizationController:
         self.robot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_2, desiredQuat=desired_quat_1, duration=4)
 
         desired_cart_pos_3 = self.getCartPosFromIndex(robot_grid_pos[0], robot_grid_pos[1])
-        self.robot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_3, desiredQuat=desired_quat_1, duration=4)
+        self.robot.gotoCartPositionAndQuat(desiredPos=desired_cart_pos_3, desiredQuat=desired_quat_1, duration=2)
 
 
 if __name__ == '__main__':
